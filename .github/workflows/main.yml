@@ -1,0 +1,43 @@
+name: Deploy to AWS Server
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow when changes are pushed to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment (optional)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # Step 3: Install dependencies (if needed)
+      - name: Install Dependencies
+        run: |
+          npm install || echo "No dependencies to install"
+
+      # Step 4: Build the static site (if applicable)
+      - name: Build Static Site
+        run: |
+          echo "No build step needed" # Replace this with a build command if needed
+
+      # Step 5: Setup SSH
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.AWS_SSH_KEY }}
+
+      # Step 6: Deploy to AWS Server
+      - name: Deploy to AWS Server
+        run: |
+          echo "Deploying to AWS server..."
+          scp -r ./index.html ./style.css ./images ubuntu@<AWS_SERVER_IP>:/var/www/html/
