@@ -40,4 +40,5 @@ jobs:
       - name: Deploy to AWS Server
         run: |
           echo "Deploying to AWS server..."
-          scp -r ./index.html ./style.css ./images ubuntu@<AWS_SERVER_IP>:/var/www/html/
+          scp -r ./index.html ./style.css ./images ubuntu@${{ secrets.AWS_SERVER_IP }}:/var/www/html/
+
