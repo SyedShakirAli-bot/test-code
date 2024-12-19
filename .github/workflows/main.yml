@@ -1,12 +1,12 @@
-name: Deploy to AWS EC2 Server
+name: Deploy to AWS Server
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger the workflow when changes are pushed to the main branch
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -14,21 +14,39 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Setup SSH
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.AWS_PEM_FILE }}" > ~/.ssh/aws_ec2_key.pem
-          chmod 600 ~/.ssh/aws_ec2_key.pem
+      # Step 2: Setup Node.js environment (optional)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-      # Step 3: Add AWS Server to known_hosts
+      # Step 3: Install dependencies (if needed)
+      - name: Install Dependencies
+        run: |
+          npm install || echo "No dependencies to install"
+
+      # Step 4: Build the static site
+      - name: Build Static Site
+        run: |
+          echo "Building static site..." 
+          # Replace this with your actual build command if you have one, e.g., `npm run build`
+          # For now, just an example to simulate a build process
+          touch ./dist/index.html ./dist/style.css ./dist/images
+
+      # Step 5: Setup SSH
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.AWS_SSH_KEY }}
+
+      # Step 6: Add AWS Server to known_hosts
       - name: Add AWS Server to known_hosts
         run: |
           ssh-keyscan -H ${{ secrets.AWS_SERVER_IP }} >> ~/.ssh/known_hosts
 
-      # Step 4: Deploy the app via SSH
-      - name: Deploy to EC2 Server
+      # Step 7: Deploy to AWS Server
+      - name: Deploy to AWS Server
         run: |
-          echo "Connecting to the server and deploying the app..."
-          ssh -i ~/.ssh/aws_ec2_key.pem ubuntu@${{ secrets.AWS_SERVER_IP }} "sudo mkdir -p /var/www/html && sudo chown ubuntu:ubuntu /var/www/html"
-          scp -i ~/.ssh/aws_ec2_key.pem -r ./index.html ./style.css ./images ubuntu@${{ secrets.AWS_SERVER_IP }}:/var/www/html/
+          echo "Deploying to AWS server..."
+          # Deploy the built site (located in ./dist)
+          scp -r ./dist/* ubuntu@${{ secrets.AWS_SERVER_IP }}:/var/www/html/
